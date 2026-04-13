@@ -13,6 +13,8 @@ PLUGIN_INSTALL_RE = re.compile(r"/plugin\s+install\s+([^\s]+)")
 PLUGIN_ADD_RE = re.compile(r"/plugin\s+add\s+([^\s]+)")
 API_SKILLS_RE = re.compile(r"(/v1/skills|POST\s+/v1/skills|Skills API)", re.IGNORECASE)
 LOCAL_PATH_RE = re.compile(r"([A-Za-z]:\\[^\n\r]+|\.{0,2}/[^\s]+)")
+CLAUDE_LOCAL_SKILL_SNIPPET_RE = re.compile(r"\.claude/skills/([^/\s]+)", re.IGNORECASE)
+LOCAL_SCAFFOLD_COMMAND_RE = re.compile(r"\b(mkdir|touch|printf|cat|echo|cp|copy)\b", re.IGNORECASE)
 
 
 def parse_args() -> argparse.Namespace:
@@ -82,6 +84,30 @@ def classify(text: str) -> dict:
         notes.append(
             "The Skills API manages hosted skills. Codex local installation still needs the underlying skill folder or ZIP."
         )
+        return {
+            "scenario": scenario,
+            "extracted": extracted,
+            "codex_route": codex_route,
+            "notes": notes,
+        }
+
+    local_scaffold = CLAUDE_LOCAL_SKILL_SNIPPET_RE.search(text)
+    if local_scaffold and LOCAL_SCAFFOLD_COMMAND_RE.search(text):
+        scenario = "claude-local-skill-scaffold"
+        extracted["skill_folder"] = local_scaffold.group(1)
+        extracted["skill_path"] = f".claude/skills/{local_scaffold.group(1)}"
+        codex_route = "normalize-local-claude-skill-scaffold"
+        notes.append(
+            "This pattern usually scaffolds a local Claude skill folder rather than installing a published skill from a marketplace or repo."
+        )
+        if "skill.md" in text and "SKILL.md" not in text and "Skill.md" not in text:
+            notes.append(
+                "The snippet uses lowercase skill.md; inspect and normalize the filename before treating it as Codex-ready."
+            )
+        if "## Metadata" in text or "**Description**" in text:
+            notes.append(
+                "The snippet appears to use markdown metadata sections instead of Codex-style YAML frontmatter, so migration polish is likely needed."
+            )
         return {
             "scenario": scenario,
             "extracted": extracted,

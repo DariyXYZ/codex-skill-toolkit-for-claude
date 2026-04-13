@@ -7,6 +7,7 @@ This repository contains a Codex-native skill that helps with:
 - deciding when direct install is enough
 - migrating Claude-only skills into Codex-friendly structure
 - handling Claude/platform-specific layouts such as `.claude/skills`, `.claude-plugin`, and `skill.json`
+- handling shell snippets that manually create `.claude/skills/<name>/skill.md`
 - detecting skill-name collisions against already installed Codex skills
 - scoring compatibility and install risk before install
 - adapting Claude tutorial install styles into Codex-friendly routes
@@ -40,6 +41,7 @@ Then restart Codex.
 - "Install this Claude skill in Codex"
 - "Will this GitHub skill repo work well in Codex?"
 - "Migrate this Claude Code skill to Codex"
+- "Will this mkdir/printf .claude/skills command really install a Claude skill?"
 - "Why is this skill on disk but not visible in Codex?"
 - "Package this migrated skill for GitHub"
 
@@ -50,6 +52,7 @@ python scripts/check_skill_md.py SKILL.md
 python scripts/inspect_skill_repo.py .
 python scripts/run_smoke_matrix.py C:\path\to\repo1 C:\path\to\repo2 --format markdown
 python scripts/classify_install_hint.py "/plugin marketplace add owner/repo"
+python scripts/classify_install_hint.py "mkdir -p .claude/skills/ux-copy && printf \"...\" > .claude/skills/ux-copy/skill.md"
 python scripts/trigger_score.py C:\path\to\skill-folder
 python scripts/generate_install_report.py --hint "https://github.com/owner/repo" --target-path C:\path\to\repo
 ```
@@ -81,6 +84,7 @@ This toolkit has been smoke-tested against:
 - `anthropics/skills` as a standard `skills/<name>/SKILL.md` multi-skill repo
 - `nextlevelbuilder/ui-ux-pro-max-skill` as a multi-platform installer repo with `.claude/skills`, `.claude-plugin`, and `skill.json`
 - `travisvn/awesome-claude-skills` as a catalog repo that should not be installed directly
+- manual `.claude/skills/<name>/skill.md` shell scaffolds that need filename and metadata normalization before Codex install
 
 See `references/real-world-test-findings.md`.
 See `references/install-route-adaptation.md`.

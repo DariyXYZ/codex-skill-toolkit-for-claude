@@ -8,6 +8,9 @@ from pathlib import Path
 
 NAME_RE = re.compile(r"^name:\s*(.+)$", re.MULTILINE)
 DESCRIPTION_RE = re.compile(r"^description:\s*(.+)$", re.MULTILINE)
+HEADING_RE = re.compile(r"^#\s+(.+)$", re.MULTILINE)
+MARKDOWN_DESCRIPTION_RE = re.compile(r"^\*\*Description\*\*:\s*(.+)$", re.MULTILINE)
+METADATA_NAME_RE = re.compile(r"^-+\s*name:\s*(.+)$", re.MULTILINE)
 TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9+./:-]*", re.IGNORECASE)
 STOPWORDS = {
     "a",
@@ -71,6 +74,18 @@ def parse_skill_frontmatter(skill_md: Path) -> dict:
         result["name"] = name_match.group(1).strip().strip('"').strip("'")
     if desc_match:
         result["description"] = desc_match.group(1).strip().strip('"').strip("'")
+    if not result["name"]:
+        metadata_name = METADATA_NAME_RE.search(text)
+        if metadata_name:
+            result["name"] = metadata_name.group(1).strip().strip('"').strip("'")
+    if not result["name"]:
+        heading_match = HEADING_RE.search(text)
+        if heading_match:
+            result["name"] = heading_match.group(1).strip()
+    if not result["description"]:
+        markdown_desc = MARKDOWN_DESCRIPTION_RE.search(text)
+        if markdown_desc:
+            result["description"] = markdown_desc.group(1).strip()
     return result
 
 
@@ -181,11 +196,27 @@ def score_trigger_quality(name: str | None, description: str | None, prompts: li
 
 
 def score_skill_dir(skill_dir: Path, prompts: list[str] | None = None) -> dict:
-    metadata = parse_skill_frontmatter(skill_dir / "SKILL.md")
+    manifest = None
+    if skill_dir.exists() and skill_dir.is_dir():
+        children_by_lower = {
+            child.name.lower(): child
+            for child in skill_dir.iterdir()
+            if child.is_file()
+        }
+        for name in ("SKILL.md", "Skill.md", "skill.md"):
+            candidate = children_by_lower.get(name.lower())
+            if candidate:
+                manifest = candidate
+                break
+    if manifest is None:
+        manifest = skill_dir / "SKILL.md"
+
+    metadata = parse_skill_frontmatter(manifest)
     result = score_trigger_quality(metadata["name"], metadata["description"], prompts)
     result["name"] = metadata["name"]
     result["description"] = metadata["description"]
     result["path"] = str(skill_dir.resolve())
+    result["manifest_file"] = manifest.name if manifest.exists() else None
     return result
 
 

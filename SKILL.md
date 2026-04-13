@@ -9,6 +9,7 @@ description: Convert, install, audit, package, and troubleshoot Claude Code skil
 
 Handle the full Claude-to-Codex skill lifecycle:
 - inspect a GitHub repo or local skill folder
+- inspect shell snippets that manually create `.claude/skills/<name>/skill.md`
 - choose the shortest safe route: direct install or migration
 - classify the install hint the user found in a Claude tutorial
 - score compatibility, dependency risk, and install tier before acting
@@ -25,6 +26,7 @@ Activate when the request includes ideas like:
 - migrate this Claude Code skill
 - port this skill to Codex
 - adapt this skill for Codex
+- will this mkdir/printf `.claude/skills/.../skill.md` command really install a skill
 - why is this installed skill not showing up
 - package this migrated skill for GitHub
 - review whether this Claude skill will work in Codex
@@ -35,9 +37,10 @@ Choose the shortest route that is still reliable.
 
 1. If the repo already contains a clean `SKILL.md` and the folder layout is obvious, install the exact skill folder first, then validate discovery.
 2. If the repo contains platform-specific layouts such as `.claude/skills`, `.claude-plugin`, or `skill.json`, inspect those signals before deciding it is non-installable.
-3. If the repo is Claude-specific, ambiguous, multi-skill, or still uses Claude-only assumptions, migrate before claiming success.
-4. If the task is only evaluation, inspect the repo and explain compatibility without installing anything.
-5. If the user wants a shareable artifact, build a clean Codex-native package with minimal structure and validation notes.
+3. If the user provides a shell snippet that creates `.claude/skills/<name>/skill.md`, treat it as a local scaffold and inspect the generated folder before calling it installed.
+4. If the repo is Claude-specific, ambiguous, multi-skill, or still uses Claude-only assumptions, migrate before claiming success.
+5. If the task is only evaluation, inspect the repo and explain compatibility without installing anything.
+6. If the user wants a shareable artifact, build a clean Codex-native package with minimal structure and validation notes.
 
 Use `scripts/inspect_skill_repo.py` when a local folder is available and the repo layout is not obvious.
 Use `scripts/check_skill_md.py` when you need a deterministic check of frontmatter or BOM issues.
@@ -88,6 +91,16 @@ When the user provides a GitHub repo or skill URL:
 6. Switch to migration if the installed skill is invisible, vaguely named, malformed, or still Claude-only.
 
 Bias toward exact `--repo` plus `--path` installs when you can infer the path confidently.
+
+## Fast Path For Local Claude Shell Snippets
+
+When the user provides a shell snippet like `mkdir ... .claude/skills/... && printf ... > skill.md`:
+
+1. Treat it as a local scaffold, not proof that a published skill was installed.
+2. Inspect the generated folder directly.
+3. Normalize `skill.md` or `Skill.md` to `SKILL.md`.
+4. Convert markdown metadata sections into YAML frontmatter when needed.
+5. Only after normalization should you claim the skill is Codex-ready.
 
 ## Migration Rules
 

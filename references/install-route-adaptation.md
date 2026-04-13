@@ -97,6 +97,24 @@ Codex adaptation:
 - if the user only has a hosted `skill_id`, ask for the exported source files or ZIP
 - if the repo/files are available, inspect them normally
 
+### 7. Local Claude shell scaffold
+
+Examples:
+- `mkdir -p .claude/skills/ux-copy && touch .claude/skills/ux-copy/skill.md`
+- `mkdir -p .claude/skills/ux-copy && printf "...markdown..." > .claude/skills/ux-copy/skill.md`
+- `cp -R my-skill ~/.claude/skills/my-skill`
+
+Claude context:
+- common in tutorials, gists, or AI-generated shell snippets
+- usually creates a local skill scaffold instead of installing a published skill from a registry
+
+Codex adaptation:
+- treat this as a local bootstrap flow, not as proof that a real published skill was installed
+- inspect the generated folder directly
+- normalize `skill.md` or `Skill.md` to `SKILL.md`
+- convert markdown metadata sections into YAML frontmatter when needed
+- only then install or copy the normalized skill into `.codex/skills`
+
 ## Recommended adaptive logic
 
 1. Detect the install hint type from the user request.
@@ -121,3 +139,4 @@ Community repositories often document:
 - `/plugin install ...`
 - GitHub repo URLs
 - CLI installers that generate `.claude/skills/` or platform-specific files
+- shell snippets that manually create `.claude/skills/<name>/skill.md` as a local bootstrap

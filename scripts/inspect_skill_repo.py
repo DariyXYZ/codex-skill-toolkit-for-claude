@@ -13,9 +13,13 @@ SKILL_LAYOUTS = (
     ("skills-dir", "skills"),
     ("claude-skills-dir", ".claude/skills"),
 )
+SKILL_MANIFEST_NAMES = ("SKILL.md", "Skill.md", "skill.md")
 
 NAME_RE = re.compile(r"^name:\s*(.+)$", re.MULTILINE)
 DESCRIPTION_RE = re.compile(r"^description:\s*(.+)$", re.MULTILINE)
+HEADING_RE = re.compile(r"^#\s+(.+)$", re.MULTILINE)
+MARKDOWN_DESCRIPTION_RE = re.compile(r"^\*\*Description\*\*:\s*(.+)$", re.MULTILINE)
+METADATA_NAME_RE = re.compile(r"^-+\s*name:\s*(.+)$", re.MULTILINE)
 COMMAND_HINT_RE = re.compile(
     r"\b(npm|pnpm|bun|bunx|npx|python|python3|pip|uv|node|cargo|go|gh)\b"
 )
@@ -31,14 +35,30 @@ def parse_args() -> argparse.Namespace:
 
 def find_skill_dirs(root: Path) -> list[Path]:
     results: list[Path] = []
-    if (root / "SKILL.md").exists():
+    if get_skill_manifest(root):
         results.append(root)
     skills_dir = root / "skills"
     if skills_dir.exists() and skills_dir.is_dir():
         for child in skills_dir.iterdir():
-            if child.is_dir() and (child / "SKILL.md").exists():
+            if child.is_dir() and get_skill_manifest(child):
                 results.append(child)
     return sorted(set(results))
+
+
+def get_skill_manifest(skill_dir: Path) -> Path | None:
+    if not skill_dir.exists() or not skill_dir.is_dir():
+        return None
+
+    children_by_lower = {
+        child.name.lower(): child
+        for child in skill_dir.iterdir()
+        if child.is_file()
+    }
+    for manifest_name in SKILL_MANIFEST_NAMES:
+        manifest = children_by_lower.get(manifest_name.lower())
+        if manifest:
+            return manifest
+    return None
 
 
 def find_layout_candidates(root: Path) -> dict[str, list[Path]]:
@@ -46,7 +66,7 @@ def find_layout_candidates(root: Path) -> dict[str, list[Path]]:
 
     for layout_name, relative_path in SKILL_LAYOUTS:
         if layout_name == "root":
-            if (root / "SKILL.md").exists():
+            if get_skill_manifest(root):
                 candidates[layout_name] = [root]
             continue
 
@@ -56,7 +76,7 @@ def find_layout_candidates(root: Path) -> dict[str, list[Path]]:
 
         children = []
         for child in base_dir.iterdir():
-            if child.is_dir() and (child / "SKILL.md").exists():
+            if child.is_dir() and get_skill_manifest(child):
                 children.append(child)
         if children:
             candidates[layout_name] = sorted(children)
@@ -75,15 +95,18 @@ def load_skill_json(root: Path) -> dict | None:
 
 
 def parse_skill_metadata(skill_dir: Path) -> dict:
-    skill_md = skill_dir / "SKILL.md"
+    skill_md = get_skill_manifest(skill_dir)
     result = {
         "folder": skill_dir.name,
         "path": str(skill_dir.resolve()),
         "name": None,
         "description": None,
+        "manifest_file": skill_md.name if skill_md else None,
+        "manifest_format": "codex-frontmatter",
+        "normalization_notes": [],
     }
 
-    if not skill_md.exists():
+    if not skill_md:
         return result
 
     try:
@@ -97,6 +120,31 @@ def parse_skill_metadata(skill_dir: Path) -> dict:
         result["name"] = name_match.group(1).strip().strip('"').strip("'")
     if desc_match:
         result["description"] = desc_match.group(1).strip().strip('"').strip("'")
+
+    if not result["name"]:
+        metadata_name = METADATA_NAME_RE.search(text)
+        if metadata_name:
+            result["name"] = metadata_name.group(1).strip().strip('"').strip("'")
+            result["manifest_format"] = "claude-markdown-metadata"
+    if not result["name"]:
+        heading_match = HEADING_RE.search(text)
+        if heading_match:
+            result["name"] = heading_match.group(1).strip()
+            result["manifest_format"] = "claude-markdown-metadata"
+    if not result["description"]:
+        markdown_desc = MARKDOWN_DESCRIPTION_RE.search(text)
+        if markdown_desc:
+            result["description"] = markdown_desc.group(1).strip()
+            result["manifest_format"] = "claude-markdown-metadata"
+
+    if skill_md.name != "SKILL.md":
+        result["normalization_notes"].append(
+            f"Manifest filename is {skill_md.name}; normalize to SKILL.md for Codex consistency."
+        )
+    if result["manifest_format"] != "codex-frontmatter":
+        result["normalization_notes"].append(
+            "Manifest uses markdown sections instead of Codex-style YAML frontmatter."
+        )
     return result
 
 
@@ -118,8 +166,8 @@ def audit_candidate_dependencies(skill_dir: Path) -> dict:
     )
 
     command_hints = set()
-    skill_md = skill_dir / "SKILL.md"
-    if skill_md.exists():
+    skill_md = get_skill_manifest(skill_dir)
+    if skill_md and skill_md.exists():
         try:
             text = skill_md.read_text(encoding="utf-8-sig")
             command_hints = set(COMMAND_HINT_RE.findall(text))
@@ -183,6 +231,12 @@ def score_candidate(candidate: dict, conflicts: dict[str, list[str]]) -> tuple[i
     if not candidate.get("description"):
         score -= 10
         reasons.append("Missing parsed description.")
+    if candidate.get("manifest_file") and candidate.get("manifest_file") != "SKILL.md":
+        score -= 10
+        reasons.append("Manifest filename should be normalized to SKILL.md.")
+    if candidate.get("manifest_format") == "claude-markdown-metadata":
+        score -= 12
+        reasons.append("Manifest uses Claude-style markdown metadata and should be migrated to Codex frontmatter.")
 
     dependency_profile = candidate.get("dependency_profile") or {}
     risk_band = dependency_profile.get("risk_band")
@@ -303,7 +357,7 @@ def inspect(path: Path) -> dict:
         "root": str(path.resolve()),
         "exists": path.exists(),
         "is_dir": path.is_dir(),
-        "has_root_skill_md": (path / "SKILL.md").exists(),
+        "has_root_skill_md": get_skill_manifest(path) is not None,
         "has_skills_dir": (path / "skills").exists(),
         "has_claude_skills_dir": (path / ".claude" / "skills").exists(),
         "has_claude_plugin": (path / ".claude-plugin" / "plugin.json").exists(),
@@ -384,11 +438,11 @@ def inspect(path: Path) -> dict:
         report["notes"].append(
             "Repo contains a skills/ directory. Install a concrete child skill folder, not the whole repo."
         )
-    elif (path / "SKILL.md").exists():
+    elif get_skill_manifest(path):
         report["repo_kind"] = "single-skill-repo"
         report["recommended_route"] = "inspect-root-skill"
         report["notes"].append(
-            "Repo root itself looks like a skill. Check SKILL.md quality, then install or migrate."
+            "Repo root itself looks like a skill. Check the manifest quality, then install or migrate."
         )
     elif report["has_skill_json"] or report["has_claude_plugin"]:
         report["repo_kind"] = "installer-or-plugin-repo"
@@ -412,6 +466,21 @@ def inspect(path: Path) -> dict:
     if conflicts:
         report["notes"].append(
             "One or more candidate skills have the same frontmatter name as already-installed Codex skills. Review for collisions before installing."
+        )
+
+    if any(
+        candidate.get("manifest_file") and candidate.get("manifest_file") != "SKILL.md"
+        for candidate in report["candidate_skills"]
+    ):
+        report["notes"].append(
+            "One or more candidate skills use Skill.md or skill.md. Normalize the manifest filename to SKILL.md before relying on Codex discovery."
+        )
+    if any(
+        candidate.get("manifest_format") == "claude-markdown-metadata"
+        for candidate in report["candidate_skills"]
+    ):
+        report["notes"].append(
+            "One or more candidate skills use Claude-style markdown metadata sections. Convert them to YAML frontmatter for reliable Codex discovery."
         )
 
     compatibility_score, install_tier = score_repo(report)

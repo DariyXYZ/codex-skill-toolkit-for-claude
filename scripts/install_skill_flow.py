@@ -109,10 +109,18 @@ def main() -> int:
             f"Inspect or install candidate folder '{chosen_candidate['folder']}' "
             f"with tier {repo_report.get('install_recommendation_tier')}."
         )
+        normalization_notes = chosen_candidate.get("normalization_notes") or []
+        if normalization_notes:
+            result["next_action"] += " Normalize the manifest before final Codex install."
     elif repo_report and len(repo_report.get("candidate_skills") or []) > 1:
         result["next_action"] = (
             "Multiple candidate skill folders were found. Choose one with "
             "--candidate-folder or use the generated report to review them."
+        )
+    elif classification.get("scenario") == "claude-local-skill-scaffold":
+        result["next_action"] = (
+            "Treat this as a local Claude skill scaffold: inspect the generated folder, "
+            "rename skill.md or Skill.md to SKILL.md, and convert markdown metadata into YAML frontmatter before Codex install."
         )
     else:
         result["next_action"] = f"Follow route: {classification.get('codex_route')}."
