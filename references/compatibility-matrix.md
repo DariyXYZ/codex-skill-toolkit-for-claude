@@ -2,6 +2,14 @@
 
 Use this matrix to choose the route quickly.
 
+## Install recommendation tiers
+
+- `tier_1_direct_install`: safe direct install candidate
+- `tier_2_direct_install_with_review`: direct install is likely fine, but review naming, collisions, or dependency signals first
+- `tier_3_migrate_after_inspection`: inspect carefully, then migrate or polish before relying on it
+- `tier_4_extract_and_migrate`: packaging is too Claude-specific or indirect for raw install
+- `tier_5_not_recommended`: treat as docs-only, incompatible, or too risky without source restructuring
+
 ## Case: repo contains `skills/<name>/SKILL.md`
 
 Recommended route:

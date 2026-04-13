@@ -8,6 +8,8 @@ This repository contains a Codex-native skill that helps with:
 - migrating Claude-only skills into Codex-friendly structure
 - handling Claude/platform-specific layouts such as `.claude/skills`, `.claude-plugin`, and `skill.json`
 - detecting skill-name collisions against already installed Codex skills
+- scoring compatibility and install risk before install
+- adapting Claude tutorial install styles into Codex-friendly routes
 - validating discovery issues such as weak frontmatter or UTF-8 BOM
 - packaging migrated skills for sharing or publishing
 
@@ -19,6 +21,7 @@ This repository contains a Codex-native skill that helps with:
 - `scripts/check_skill_md.py`: lint-like checker for discovery-critical `SKILL.md` issues
 - `scripts/inspect_skill_repo.py`: quick repo triage for migration planning
 - `scripts/run_smoke_matrix.py`: smoke-test matrix for multiple local skill repos
+- `scripts/classify_install_hint.py`: translates Claude-oriented install hints into Codex install routes
 
 ## Install in Codex
 
@@ -43,6 +46,7 @@ Then restart Codex.
 python scripts/check_skill_md.py SKILL.md
 python scripts/inspect_skill_repo.py .
 python scripts/run_smoke_matrix.py C:\path\to\repo1 C:\path\to\repo2 --format markdown
+python scripts/classify_install_hint.py "/plugin marketplace add owner/repo"
 ```
 
 ## Real-world findings
@@ -53,6 +57,8 @@ This toolkit has been smoke-tested against:
 - `travisvn/awesome-claude-skills` as a catalog repo that should not be installed directly
 
 See `references/real-world-test-findings.md`.
+See `references/install-route-adaptation.md`.
+See `references/claude-install-patterns-research.md`.
 
 ## License
 

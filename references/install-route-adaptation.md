@@ -1,0 +1,123 @@
+# Install Route Adaptation
+
+This guide translates common Claude skill installation patterns into Codex-friendly actions.
+
+## Why this matters
+
+Users often discover skills through tutorials written for Claude, not Codex. The toolkit should recognize the installation style in the user's request and choose the correct adaptation path.
+
+## Common Claude installation patterns
+
+### 1. GitHub repo or repo path
+
+Examples:
+- `https://github.com/owner/repo`
+- `owner/repo`
+- `https://github.com/owner/repo/tree/main/skills/skill-name`
+
+Claude context:
+- often documented as a plugin marketplace repo
+- may also be a direct skill repo
+
+Codex adaptation:
+- inspect the repo
+- locate `skills/<name>/SKILL.md`, `.claude/skills/<name>/SKILL.md`, or root `SKILL.md`
+- install the exact skill folder
+- migrate only if discovery or naming quality is weak
+
+### 2. Claude marketplace add
+
+Examples:
+- `/plugin marketplace add owner/repo`
+- `/plugin marketplace add https://gitlab.com/company/plugins.git`
+- `/plugin marketplace add ./my-marketplace`
+
+Claude context:
+- adds a marketplace source containing `.claude-plugin/marketplace.json`
+
+Codex adaptation:
+- inspect the referenced repo or local directory
+- do not assume the marketplace itself is the skill
+- extract the real skill folders behind the marketplace metadata
+- if only plugin wrappers exist, inspect platform packaging before install
+
+### 3. Claude plugin install
+
+Examples:
+- `/plugin install ui-ux-pro-max@ui-ux-pro-max-skill`
+
+Claude context:
+- installs a plugin from a known marketplace
+
+Codex adaptation:
+- resolve the marketplace repo first
+- inspect `.claude/skills/` or other packaged skill locations
+- install or migrate the underlying skill folder, not the Claude plugin wrapper
+
+### 4. Local plugin add
+
+Examples:
+- `/plugin add /path/to/skill-directory`
+- `/plugin add ./path/to/marketplace.json`
+
+Claude context:
+- local plugin or marketplace install
+
+Codex adaptation:
+- inspect the local path directly
+- if it points to a skill folder, evaluate `SKILL.md`
+- if it points to marketplace/plugin metadata, locate the real child skill folders
+
+### 5. Web upload as ZIP
+
+Examples:
+- "Upload a ZIP file containing your skill folder"
+- "Package your skill folder as a ZIP file"
+
+Claude context:
+- Claude web UI supports skill ZIP uploads
+
+Codex adaptation:
+- unzip the package
+- inspect the extracted folder
+- install the contained skill folder into `.codex/skills`
+- migrate only if discovery quality is poor
+
+### 6. Skills API
+
+Examples:
+- `POST /v1/skills`
+- "Create and manage custom agent skills"
+
+Claude context:
+- hosted API-managed skill lifecycle
+
+Codex adaptation:
+- local Codex installation still requires the actual filesystem skill package
+- if the user only has a hosted `skill_id`, ask for the exported source files or ZIP
+- if the repo/files are available, inspect them normally
+
+## Recommended adaptive logic
+
+1. Detect the install hint type from the user request.
+2. Normalize it into a Codex route.
+3. Inspect the underlying repo, folder, or ZIP.
+4. Choose one of:
+- direct install
+- direct install with review
+- migrate after inspection
+- extract and migrate
+- not recommended
+
+## Official and ecosystem signals
+
+Official patterns currently visible in Claude materials include:
+- custom skill ZIP upload in Claude web settings
+- Skills API creation and management for hosted skills
+- plugin marketplace commands in Claude Code docs and ecosystem repos
+
+Community repositories often document:
+- `/plugin marketplace add ...`
+- `/plugin install ...`
+- GitHub repo URLs
+- CLI installers that generate `.claude/skills/` or platform-specific files

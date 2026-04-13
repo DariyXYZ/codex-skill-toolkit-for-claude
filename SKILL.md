@@ -10,6 +10,8 @@ description: Convert, install, audit, package, and troubleshoot Claude Code skil
 Handle the full Claude-to-Codex skill lifecycle:
 - inspect a GitHub repo or local skill folder
 - choose the shortest safe route: direct install or migration
+- classify the install hint the user found in a Claude tutorial
+- score compatibility, dependency risk, and install tier before acting
 - rewrite discovery-critical metadata when needed
 - validate that Codex can actually discover the result
 - package the finished skill for reuse or GitHub publishing
@@ -39,6 +41,7 @@ Choose the shortest route that is still reliable.
 
 Use `scripts/inspect_skill_repo.py` when a local folder is available and the repo layout is not obvious.
 Use `scripts/check_skill_md.py` when you need a deterministic check of frontmatter or BOM issues.
+Use `scripts/classify_install_hint.py` when the user pastes a Claude tutorial command or install snippet and you need to map it to a Codex route.
 
 ## Core Workflow
 
@@ -47,11 +50,13 @@ Read the repo layout, locate `skills/`, `SKILL.md`, helper scripts, and any Clau
 
 2. Decide the route.
 Use `references/compatibility-matrix.md` to decide between direct install, light adaptation, or full migration.
+If the user copied a tutorial command, normalize it first with `references/install-route-adaptation.md`.
 
 3. Perform the smallest viable change.
 - Direct install if the source is already Codex-friendly.
 - Rewrite `SKILL.md` and supporting files if discovery or trigger quality is weak.
 - Split long guidance into `references/` when building a durable Codex port.
+- Use compatibility score and install tier to explain why a route is safe or risky.
 
 4. Validate, do not assume.
 Always verify:
@@ -117,6 +122,7 @@ When building a shareable Codex-native port:
 Before calling the migration finished, verify:
 - `scripts/check_skill_md.py <path-to-skill-md>` reports no blocking issues
 - `scripts/inspect_skill_repo.py <path-to-skill-folder>` shows the expected structure
+- compatibility score, dependency profile, and install tier are sensible for the chosen route
 - `codex debug prompt-input` shows the skill when installed into a live Codex skills directory
 
 ## Reference Guide
@@ -124,4 +130,5 @@ Before calling the migration finished, verify:
 Read only what is needed:
 - `references/migration-playbook.md` for the end-to-end migration sequence
 - `references/compatibility-matrix.md` for route selection
+- `references/install-route-adaptation.md` for translating Claude install tutorials into Codex actions
 - `references/discovery-troubleshooting.md` for failure analysis
