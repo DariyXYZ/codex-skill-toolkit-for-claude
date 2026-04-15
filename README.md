@@ -2,11 +2,14 @@
 
 Convert, install, audit, package, and troubleshoot Claude Code skills for Codex.
 
-This repository contains a Codex-native skill that helps with:
+This repository contains a Codex-native skill for people who need to move skills from Claude-oriented ecosystems into Codex without guessing what will actually work.
+
+It helps with:
+
 - installing Claude-oriented skills into Codex
 - deciding when direct install is enough
 - migrating Claude-only skills into Codex-friendly structure
-- handling Claude/platform-specific layouts such as `.claude/skills`, `.claude-plugin`, and `skill.json`
+- handling Claude- or platform-specific layouts such as `.claude/skills`, `.claude-plugin`, and `skill.json`
 - handling shell snippets that manually create `.claude/skills/<name>/skill.md`
 - detecting skill-name collisions against already installed Codex skills
 - scoring compatibility and install risk before install
@@ -14,11 +17,47 @@ This repository contains a Codex-native skill that helps with:
 - validating discovery issues such as weak frontmatter or UTF-8 BOM
 - packaging migrated skills for sharing or publishing
 
+## Who this is for
+
+- Codex users installing skills from Claude- or Anthropic-oriented repos
+- people adapting multi-platform skill repos into Codex-friendly layouts
+- maintainers who want a repeatable migration and validation workflow
+
+## Why this repo exists
+
+Installing a skill from GitHub is often not enough when the source repo uses Claude-specific packaging such as `.claude/skills`, `.claude-plugin`, `skill.json`, or marketplace-style install instructions.
+
+This toolkit exists to:
+
+- distinguish direct-install cases from migration cases
+- validate discovery-critical details before calling the install done
+- reduce broken installs caused by weak metadata, wrong folder choice, or platform assumptions
+
+## Quick install
+
+Copy or clone this folder into your local Codex skills directory:
+
+- Windows: `C:\Users\<you>\.codex\skills\claude-codex-skill-toolkit`
+- or any Codex-indexed skills path used by your environment
+
+Then restart Codex.
+
+## Quick use
+
+Typical prompts:
+
+- "Install this Claude skill in Codex"
+- "Will this GitHub skill repo work well in Codex?"
+- "Migrate this Claude Code skill to Codex"
+- "Why is this skill on disk but not visible in Codex?"
+- "Package this migrated skill for GitHub"
+
 ## Automatic Claude markers
 
-This toolkit should be used automatically when a user asks to install a skill and the request contains Claude-oriented signals, even if the user does not explicitly say "use claude-codex-skill-toolkit".
+This toolkit should be used automatically when a user asks to install a skill and the request contains Claude-oriented signals, even if they do not explicitly say "use claude-codex-skill-toolkit".
 
 Strong markers include:
+
 - GitHub URLs or `owner/repo` references under `anthropics/`, especially `anthropics/skills`
 - text containing `Claude`, `Claude Code`, `Anthropic`, or `anthropics`
 - `.claude/skills`, `.claude-plugin`, `skill.json`, or `marketplace.json`
@@ -26,6 +65,7 @@ Strong markers include:
 - Claude ZIP upload instructions and Skills API references
 
 Expected behavior:
+
 - detect the Claude marker first
 - run the toolkit flow
 - inspect the real skill layout
@@ -43,16 +83,7 @@ Expected behavior:
 - `scripts/classify_install_hint.py`: translates Claude-oriented install hints into Codex install routes
 - `scripts/trigger_score.py`: estimates how well a skill will match realistic user phrasing
 - `scripts/generate_install_report.py`: creates a Markdown install report after analysis
-- `scripts/install_skill_flow.py`: semi-automatic install workflow for local repo/skill paths
-
-## Install in Codex
-
-Copy or clone this folder into your local Codex skills directory:
-
-- Windows: `C:\Users\<you>\.codex\skills\claude-codex-skill-toolkit`
-- Or any Codex-indexed skills path used by your environment
-
-Then restart Codex.
+- `scripts/install_skill_flow.py`: semi-automatic install workflow for local repo or skill paths
 
 ## Typical use cases
 
@@ -101,6 +132,7 @@ python scripts/install_skill_flow.py `
 ## Real-world findings
 
 This toolkit has been smoke-tested against:
+
 - `anthropics/skills` as a standard `skills/<name>/SKILL.md` multi-skill repo
 - `nextlevelbuilder/ui-ux-pro-max-skill` as a multi-platform installer repo with `.claude/skills`, `.claude-plugin`, and `skill.json`
 - `travisvn/awesome-claude-skills` as a catalog repo that should not be installed directly
@@ -109,6 +141,10 @@ This toolkit has been smoke-tested against:
 See `references/real-world-test-findings.md`.
 See `references/install-route-adaptation.md`.
 See `references/claude-install-patterns-research.md`.
+
+## Scope boundary
+
+This repository focuses on Claude-to-Codex skill compatibility, migration, validation, and packaging. It is not a general-purpose plugin manager for arbitrary development tools.
 
 ## License
 
