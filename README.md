@@ -2,9 +2,13 @@
 
 Convert, install, audit, package, and troubleshoot Claude Code skills for Codex.
 
+> [!NOTE]
+> Public GitHub repository: `codex-skill-toolkit-for-claude`.
+> The recommended local Codex install folder remains `claude-codex-skill-toolkit` so the skill name stays stable inside the tool.
+
 This repository contains a Codex-native skill for people who need to move skills from Claude-oriented ecosystems into Codex without guessing what will actually work.
 
-![Validate Skill](https://github.com/DariyXYZ/claude-codex-skill-toolkit/actions/workflows/validate.yml/badge.svg)
+![Validate Skill](https://github.com/DariyXYZ/codex-skill-toolkit-for-claude/actions/workflows/validate.yml/badge.svg)
 
 It helps with:
 
