@@ -48,6 +48,24 @@ def render_candidate_section(report: dict) -> list[str]:
     return lines
 
 
+def render_native_polish_section() -> list[str]:
+    return [
+        "## Codex-Native Polish Gates",
+        "",
+        "Before calling the install complete, verify:",
+        "",
+        "- `SKILL.md` frontmatter is simple, parser-friendly, and trigger-rich for Codex prompts.",
+        "- The body describes Codex behavior; Claude is mentioned only for upstream context or real external tools.",
+        "- `.claude-plugin`, marketplace, hook, `SessionStart`, and `UserPromptSubmit` expectations are removed or rewritten.",
+        "- Style or behavior-changing skills preserve safety, tool results, code, commands, paths, URLs, errors, tests, and citations.",
+        "- Persistent mode claims respect Codex skill triggering and conversation scope.",
+        "- Commands match the target OS, especially Windows installs that should not rely only on `python3`.",
+        "- External LLM or CLI backends are documented with credentials and data-boundary warnings.",
+        "- Broken encoding, copied README noise, and nonworking examples are removed.",
+        "",
+    ]
+
+
 def render_markdown(hint: str, classification: dict, repo_report: dict | None) -> str:
     lines = [
         "# Install Report",
@@ -87,6 +105,9 @@ def render_markdown(hint: str, classification: dict, repo_report: dict | None) -
             lines.append(f"- Repo notes: {'; '.join(repo_report['notes'])}")
         lines.append("")
         lines.extend(render_candidate_section(repo_report))
+
+    lines.extend([""])
+    lines.extend(render_native_polish_section())
 
     return "\n".join(lines).rstrip() + "\n"
 

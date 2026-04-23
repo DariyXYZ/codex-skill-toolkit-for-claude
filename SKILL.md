@@ -47,9 +47,10 @@ Choose the shortest route that is still reliable.
 1. If the repo already contains a clean `SKILL.md` and the folder layout is obvious, install the exact skill folder first, then validate discovery.
 2. If the repo contains platform-specific layouts such as `.claude/skills`, `.claude-plugin`, or `skill.json`, inspect those signals before deciding it is non-installable.
 3. If the user provides a shell snippet that creates `.claude/skills/<name>/skill.md`, treat it as a local scaffold and inspect the generated folder before calling it installed.
-4. If the repo is Claude-specific, ambiguous, multi-skill, or still uses Claude-only assumptions, migrate before claiming success.
-5. If the task is only evaluation, inspect the repo and explain compatibility without installing anything.
-6. If the user wants a shareable artifact, build a clean Codex-native package with minimal structure and validation notes.
+4. After any direct install, run the Codex-native polish checklist. A valid `SKILL.md` can still contain Claude-only behavior.
+5. If the repo is Claude-specific, ambiguous, multi-skill, or still uses Claude-only assumptions, migrate before claiming success.
+6. If the task is only evaluation, inspect the repo and explain compatibility without installing anything.
+7. If the user wants a shareable artifact, build a clean Codex-native package with minimal structure and validation notes.
 
 Use `scripts/inspect_skill_repo.py` when a local folder is available and the repo layout is not obvious.
 Use `scripts/check_skill_md.py` when you need a deterministic check of frontmatter or BOM issues.
@@ -70,23 +71,43 @@ If the user copied a tutorial command, normalize it first with `references/insta
 3. Perform the smallest viable change.
 - Direct install if the source is already Codex-friendly.
 - Rewrite `SKILL.md` and supporting files if discovery or trigger quality is weak.
+- Remove or rewrite Claude-only instructions, plugin hooks, marketplace assumptions, and broken command examples.
 - Split long guidance into `references/` when building a durable Codex port.
 - Use compatibility score and install tier to explain why a route is safe or risky.
 - Generate an install report whenever the result will be reviewed later, shared, or used as a migration record.
 
-4. Validate, do not assume.
+4. Polish for Codex-native behavior.
+Use the checklist below and the longer playbook in `references/migration-playbook.md`. Preserve behavior, but rewrite packaging and operational guidance so the installed skill is usable by Codex.
+
+5. Validate, do not assume.
 Always verify:
 - the skill folder exists where intended
 - `SKILL.md` is parser-friendly
 - the file is UTF-8 without BOM
 - `codex debug prompt-input` exposes the skill when the target is a live Codex install
 
-5. Package cleanly when asked.
+6. Package cleanly when asked.
 For GitHub or sharing, keep one canonical skill folder with:
 - `SKILL.md`
 - `agents/openai.yaml` when useful
 - `references/` only for material worth loading on demand
 - `scripts/` only for deterministic helpers
+
+## Codex-Native Polish Checklist
+
+Always review installed Claude skills for these issues before calling the port done:
+
+- Frontmatter uses simple YAML with a clear one-line `description` unless parser validation proves folded text works.
+- Description names realistic Codex trigger phrases, not only Claude slash commands.
+- Body says Codex where the agent is Codex; keep "Claude" only when it names an external tool or upstream source.
+- Remove `.claude-plugin`, marketplace, hook, `SessionStart`, and `UserPromptSubmit` expectations from the installed skill.
+- Rewrite persistent behavior claims such as "ACTIVE EVERY RESPONSE" so they respect Codex skill triggering and conversation scope.
+- Add Codex priority rules when a skill changes assistant behavior: system, developer, safety, and tool instructions win.
+- Preserve exact text requirements for code, commands, file paths, URLs, errors, test output, and citations.
+- Convert host-specific examples such as bare `python3` to commands that fit the user's OS when installing locally.
+- If helper scripts call Claude, Anthropic, OpenAI, or another external backend, document that dependency and the data boundary honestly.
+- Remove broken mojibake or non-ASCII examples unless they are necessary and verified.
+- Install one canonical skill folder; do not copy whole Claude plugin repos into Codex when wrappers add no value.
 
 ## Fast Path For GitHub Skill Repos
 
@@ -97,7 +118,7 @@ When the user provides a GitHub repo or skill URL:
 3. If the repo, owner, path, or surrounding text carries Claude-oriented signals such as `anthropics/skills`, `Claude`, `Anthropic`, or `.claude/*`, stay in this toolkit flow even when the skill path looks obvious.
 4. Install the exact skill folder, not the whole repository, when the target path is clear.
 5. Read the installed `SKILL.md` immediately after install.
-6. Stop if discovery is already clean and the trigger quality is acceptable.
+6. Run the Codex-native polish checklist even if discovery is already clean and trigger quality is acceptable.
 7. Switch to migration if the installed skill is invisible, vaguely named, malformed, weakly described, or still Claude-only.
 
 Bias toward exact `--repo` plus `--path` installs when you can infer the path confidently.
@@ -110,7 +131,8 @@ When the user provides a shell snippet like `mkdir ... .claude/skills/... && pri
 2. Inspect the generated folder directly.
 3. Normalize `skill.md` or `Skill.md` to `SKILL.md`.
 4. Convert markdown metadata sections into YAML frontmatter when needed.
-5. Only after normalization should you claim the skill is Codex-ready.
+5. Rewrite any Claude-specific persistence, hook, plugin, or command assumptions.
+6. Only after normalization and Codex-native polish should you claim the skill is Codex-ready.
 
 ## Migration Rules
 
@@ -118,9 +140,11 @@ When migration is required:
 
 1. Preserve behavior, not original packaging.
 2. Rewrite the frontmatter so `name` and `description` clearly express both function and trigger phrases.
-3. Keep the body concise and operational.
-4. Move long playbooks, mappings, and troubleshooting into `references/`.
-5. Avoid duplicate aliases unless there is a real discovery reason.
+3. Add Codex priority rules when a skill changes assistant behavior, especially for safety, exact output, code, tests, and tool results.
+4. Replace Claude-only commands with Codex-appropriate actions or mark them as external dependencies.
+5. Keep the body concise and operational.
+6. Move long playbooks, mappings, and troubleshooting into `references/`.
+7. Avoid duplicate aliases unless there is a real discovery reason.
 
 For the full sequence, read `references/migration-playbook.md`.
 

@@ -19,6 +19,7 @@ Take a user-provided install hint and move from "tutorial syntax" to "Codex acti
 - repo compatibility score
 - install recommendation tier
 - candidate skill shortlist
+- Codex-native polish decisions
 - optional Markdown report
 - optional local copy into `.codex/skills`
 
@@ -45,5 +46,20 @@ Combines the previous scripts into a semi-automatic installer flow.
 1. Classify the install hint.
 2. Inspect the repo or local extracted package.
 3. Review score, tier, conflicts, and trigger quality.
-4. Generate a report.
-5. If the path is local and safe, copy the chosen skill into `.codex/skills`.
+4. If the path is local and safe, copy the chosen skill into `.codex/skills`.
+5. Read the installed `SKILL.md` and run the Codex-native polish checklist from `migration-playbook.md`.
+6. Patch the installed skill or source package so instructions are native to Codex.
+7. Re-run validation and discovery checks.
+8. Generate a report when the result should be reviewed, shared, or committed.
+
+## Native polish gates
+
+Do not call an install complete only because `codex debug prompt-input` sees it. Also check:
+
+- no Claude-only plugin hooks are expected to run
+- no marketplace install command remains as the operative Codex instruction
+- behavior-changing skills include Codex priority and safety rules
+- style skills preserve exact code, command, error, path, URL, and test output
+- helper scripts have working commands for the user's OS
+- external LLM calls and data transfer are documented
+- broken encoding or copied README examples are removed

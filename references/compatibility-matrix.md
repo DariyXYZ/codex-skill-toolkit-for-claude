@@ -16,6 +16,7 @@ Recommended route:
 - install that exact folder first
 - read the installed `SKILL.md`
 - validate discovery
+- run Codex-native polish before calling it ready
 
 Risk level:
 - low to medium
@@ -24,6 +25,8 @@ Migration needed when:
 - the description is weak
 - the name is misleading
 - discovery fails
+- the body still assumes Claude plugin lifecycle, hooks, slash-command persistence, or marketplace behavior
+- scripts require Claude-only runtime without documenting the dependency
 
 ## Case: repo contains `.claude/skills/<name>/SKILL.md`
 
@@ -39,11 +42,15 @@ Migration needed when:
 - the repo only documents Claude marketplace install paths
 - there is no obvious Codex-native packaging
 - the skill name or description needs cleanup for Codex triggering
+- the useful skill logic is wrapped in plugin-only files that Codex will not execute
 
 Extra signals:
 - `skill.json`
 - `.claude-plugin/plugin.json`
 - multi-platform CLI install instructions in `README.md`
+- `hooks/`
+- `SessionStart`
+- `UserPromptSubmit`
 
 ## Case: repo contains only a root `README.md` and links to other skills
 
@@ -64,12 +71,14 @@ Recommended route:
 - inspect the real skill content
 - preserve logic, not installation wrapper
 - migrate to Codex-native packaging
+- remove plugin hooks and marketplace commands from the installed skill unless they are only documented as upstream context
 
 Risk level:
 - medium to high
 
 Migration needed when:
 - the workflow depends on Claude-only marketplace or plugin behavior
+- the skill claims automatic activation via Claude hooks or plugin state
 
 ## Case: skill installs but does not appear in `codex debug prompt-input`
 
@@ -95,3 +104,21 @@ Risk level:
 
 Migration needed when:
 - the original wording was written for Claude-specific invocation behavior
+
+## Case: skill appears in Codex but still behaves like a Claude plugin
+
+Recommended route:
+- treat discovery as necessary but not sufficient
+- rewrite `SKILL.md` body for Codex
+- remove or quarantine plugin wrappers, hooks, and marketplace assumptions
+- add Codex priority rules for style or behavior-changing skills
+- document external LLM or CLI dependencies honestly
+
+Risk level:
+- medium to high
+
+Migration needed when:
+- the skill says it is active every response without user activation or conversation scope
+- it depends on `.claude-plugin`, `SessionStart`, `UserPromptSubmit`, or Claude settings files
+- command examples are not runnable in the target environment
+- it sends file contents to Anthropic, Claude CLI, OpenAI, or another service without warning

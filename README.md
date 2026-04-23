@@ -15,6 +15,7 @@ It helps with:
 - installing Claude-oriented skills into Codex
 - deciding when direct install is enough
 - migrating Claude-only skills into Codex-friendly structure
+- polishing direct installs so valid Claude skills behave natively in Codex
 - handling Claude- or platform-specific layouts such as `.claude/skills`, `.claude-plugin`, and `skill.json`
 - handling shell snippets that manually create `.claude/skills/<name>/skill.md`
 - detecting skill-name collisions against already installed Codex skills
@@ -76,7 +77,23 @@ Expected behavior:
 - run the toolkit flow
 - inspect the real skill layout
 - choose direct install, install-with-review, migration, or extract-and-migrate
+- remove or rewrite Claude-only behavior before calling the skill ready
 - validate Codex discovery before calling the install done
+
+## Codex-native polish
+
+Discovery is necessary but not sufficient. A Claude skill can appear in Codex and still carry rules that do not work there.
+
+Before calling an install complete, this toolkit now checks for:
+
+- folded or weak frontmatter descriptions that trigger poorly
+- `Claude should` wording where the active agent is Codex
+- `.claude-plugin`, marketplace, `SessionStart`, and `UserPromptSubmit` expectations
+- style rules that override safety, exact output, code, command, error, or test-result requirements
+- persistent mode claims that ignore Codex skill activation and conversation scope
+- command examples that do not fit the target OS, such as Windows installs using only `python3`
+- helper scripts that call Anthropic, Claude CLI, OpenAI, or another external backend without documenting credentials and data transfer
+- broken copied examples, mojibake, or plugin wrapper files that add no value in Codex
 
 ## What is inside
 
@@ -105,13 +122,13 @@ Expected behavior:
 ## Local checks
 
 ```powershell
-python scripts/check_skill_md.py SKILL.md
-python scripts/inspect_skill_repo.py .
-python scripts/run_smoke_matrix.py C:\path\to\repo1 C:\path\to\repo2 --format markdown
-python scripts/classify_install_hint.py "/plugin marketplace add owner/repo"
-python scripts/classify_install_hint.py "mkdir -p .claude/skills/ux-copy && printf \"...\" > .claude/skills/ux-copy/skill.md"
-python scripts/trigger_score.py C:\path\to\skill-folder
-python scripts/generate_install_report.py --hint "https://github.com/owner/repo" --target-path C:\path\to\repo
+py -3 scripts/check_skill_md.py SKILL.md
+py -3 scripts/inspect_skill_repo.py .
+py -3 scripts/run_smoke_matrix.py C:\path\to\repo1 C:\path\to\repo2 --format markdown
+py -3 scripts/classify_install_hint.py "/plugin marketplace add owner/repo"
+py -3 scripts/classify_install_hint.py "mkdir -p .claude/skills/ux-copy && printf \"...\" > .claude/skills/ux-copy/skill.md"
+py -3 scripts/trigger_score.py C:\path\to\skill-folder
+py -3 scripts/generate_install_report.py --hint "https://github.com/owner/repo" --target-path C:\path\to\repo
 ```
 
 ## Semi-automatic install flow
@@ -119,7 +136,7 @@ python scripts/generate_install_report.py --hint "https://github.com/owner/repo"
 Example:
 
 ```powershell
-python scripts/install_skill_flow.py `
+py -3 scripts/install_skill_flow.py `
   --hint "/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill" `
   --target-path C:\path\to\ui-ux-pro-max-skill `
   --report-out install-report.md
@@ -128,7 +145,7 @@ python scripts/install_skill_flow.py `
 If the target path is local and you already know the chosen candidate folder, you can also copy it into Codex:
 
 ```powershell
-python scripts/install_skill_flow.py `
+py -3 scripts/install_skill_flow.py `
   --hint "https://github.com/anthropics/skills/tree/main/skills/frontend-design" `
   --target-path C:\path\to\repo `
   --candidate-folder frontend-design `

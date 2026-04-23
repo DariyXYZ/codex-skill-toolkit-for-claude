@@ -107,7 +107,8 @@ def main() -> int:
     if classification.get("should_use_claude_codex_skill_toolkit"):
         result["next_action"] = (
             "Claude-oriented markers were detected, so use the Claude-to-Codex toolkit flow first: "
-            "inspect the source, review compatibility and discovery signals, then install or migrate the exact skill folder."
+            "inspect the source, review compatibility and discovery signals, install or migrate the exact skill folder, "
+            "then run Codex-native polish before calling it ready."
         )
         if chosen_candidate:
             result["next_action"] += (
@@ -116,7 +117,7 @@ def main() -> int:
     elif chosen_candidate:
         result["next_action"] = (
             f"Inspect or install candidate folder '{chosen_candidate['folder']}' "
-            f"with tier {repo_report.get('install_recommendation_tier')}."
+            f"with tier {repo_report.get('install_recommendation_tier')}, then run Codex-native polish."
         )
         normalization_notes = chosen_candidate.get("normalization_notes") or []
         if normalization_notes:
@@ -124,12 +125,14 @@ def main() -> int:
     elif repo_report and len(repo_report.get("candidate_skills") or []) > 1:
         result["next_action"] = (
             "Multiple candidate skill folders were found. Choose one with "
-            "--candidate-folder or use the generated report to review them."
+            "--candidate-folder or use the generated report to review them. "
+            "After choosing, run Codex-native polish before calling the install ready."
         )
     elif classification.get("scenario") == "claude-local-skill-scaffold":
         result["next_action"] = (
             "Treat this as a local Claude skill scaffold: inspect the generated folder, "
-            "rename skill.md or Skill.md to SKILL.md, and convert markdown metadata into YAML frontmatter before Codex install."
+            "rename skill.md or Skill.md to SKILL.md, convert markdown metadata into YAML frontmatter, "
+            "and rewrite Claude-only behavior before Codex install."
         )
     else:
         result["next_action"] = f"Follow route: {classification.get('codex_route')}."
@@ -141,6 +144,10 @@ def main() -> int:
             )
         destination = copy_to_codex_skills(Path(chosen_candidate["path"]))
         result["executed_copy_destination"] = str(destination.resolve())
+        result["next_action"] += (
+            " Copy executed. Read the installed SKILL.md, remove Claude-only rules or wrappers, "
+            "document external backends, and validate with codex debug prompt-input."
+        )
 
     if args.report_out:
         report_markdown = render_markdown(args.hint, classification, repo_report)
